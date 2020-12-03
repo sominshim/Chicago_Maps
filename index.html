@@ -1,141 +1,170 @@
-<!DOCTYPE html>
+<html>
 <head>
-<style>
-
-body {
-	background: rgb(10, 16, 29);
-}
-
-.water {
-	fill: rgb(66, 73, 85);
-	fill-opacity: 1;
-}
-
-.landuse {
-	fill: rgb(51, 51, 51);
-	fill-opacity: 0.5;
-}
-
-.roads_residential {
-	fill: none;
-	stroke: rgb(63, 71, 85);
-	stroke-width: 0.3px;
-}
-
-.roads_secondary {
-	fill: none;
-	stroke: rgb(63, 71, 85);
-	stroke-width: 0.4px;
-}
-
-.roads_primary {
-	fill: none;
-	stroke: rgb(63, 71, 85);
-	stroke-width: 0.5px;
-}
-
-.roads_trunk {
-	fill: none;
-	stroke: rgb(63, 71, 85);
-	stroke-width: 0.8px;
-}
-
-</style>
-
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
-<script src="http://d3js.org/topojson.v0.min.js"></script>
+<title>Chicago Maps</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<link href="/maps.css" rel="stylesheet">
+<link rel="icon" type="image/png" href="" />
 </head>
+
 <body>
+<div id="nameplate">
+  <h1>Chicago<span class="minimal-select"><select id="map">
+        <option value="wards">wards</option>
+        <!-- <option value="tifs">TIF districts</option> -->
+        <!-- <option value="precincts">precincts</option> -->
+        <option value="parks">parks</option>
+        <!-- <option value="census_tracts">census tracts</option>
+        <option value="neighborhoods">neighborhoods</option>
+        <option value="boundaries">boundaries</option>
+        <option value="void">in the void</option> -->
+      </select><select id="overlay">
+        <option value="none">with no overlay</option>
+        <!-- <option value="none">with no overlay</option> -->
+        <!-- <option value="bike_routes">with bike routes</option> -->
+        <option value="streets">with streets (18MB)</option>
+        <!-- <option value="el">with the El</option> -->
+        <!-- <option value="bike_racks">with bike racks</option> -->
+        <option value="landmarks">with landmarks</option>
+        <option value="public_art">with public art</option>
+        <!-- <option value="dry_precincts">with dry precincts</option> -->
+      </select><span id="page-link"><a href="">(link)</a></span>
+    </span>
+  </h1>
+</div>
 
-<script>
 
-var width = 1200,
-	height = 760;
+<div id="zoom-in">+</div>
+<div id="zoom-out">-</div>
+<div id="info-box"></div>
+<div id="overlay-box"></div>
+<div id="signature">
 
-var projection = d3.geo.mercator()
-	.translate([width/2, height/2])
-	.center([-87.685323, 41.8352915])
-	.scale(70000);
-	
-var path = d3.geo.path()
-	.projection(projection);
-	
-var colour = d3.scale.threshold()
-    .domain([0, 9, 14, 19, 24, 30])
-    .range(["#7f0000", "#d7301f", "#ef6548", "#fc8d59", "#fdbb84", "#fdd49e", "#fff7ec"]);
+</div>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.11/d3.min.js"></script>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.1.0/topojson.min.js"></script>
+<script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-url-parser/2.3.1/purl.min.js"></script>
+<!-- <script src="/crimedata0.js"></script> -->
 
-var svg = d3.select("body").append("svg")
-	.attr("width", width)
-	.attr("height", height);
+<script src="/maps.js"></script>
+<script type="text/template" id="tif-template">
+  <div class="info">
+    <h2><%= shape.NAME %></h2>
+    <p>
+      Reference number <%= shape.REF %><br>
+      <%= shape.USE %>
+    </p>
+  </div>
+</script>
+<script type="text/template" id="precinct-template">
+  <div class="info">
+    <h2><%= getOrdinalSuffix(shape.PRECINCT) %> precinct, <%= getOrdinalSuffix(shape.WARD) %> ward</h2>
+  </div>
+</script>
+<script type="text/template" id="parks-template">
+  <div class="info">
+    <h2><%= shape.PARK %> PARK</h2>
+    <p>
+      <%= shape.LOCATION %><br>
+      <%= shape.ACRES %> acres
+    </p>
+  </div>
+</script>
+<script type="text/template" id="wards-template">
+  <div class="info">
+    <h2><%= getOrdinalSuffix(shape.District_1) %> ward</h2>
+  </div>
+</script>
+<script type="text/template" id="neighborhoods-template">
+  <div class="info">
+    <h2><%= shape.PRI_NEIGH %></h2>
+  </div>
+</script>
+<script type="text/template" id="census_tracts-template">
+  <div class="info">
+    <h2><%= shape.NAMELSAD10 %></h2>
+  </div>
+</script>
+<script type="text/template" id="streets-template">
+  <div class="info">
+    <h3><%= shape.STREET_NAM %> <%= shape.STREET_TYP %></h3>
+  </div>
+</script>
+<script type="text/template" id="el-template">
+  <div class="info">
+    <h3><%= shape.LINES %></h3>
+    <h4><%= shape.DESCRIPTIO %></h4>
+  </div>
+</script>
+<script type="text/template" id="bike_route-template">
+  <div class="info">
+    <h3><%= shape.STREET %></h3>
+    <h4>
+      From <%= shape.F_STREET %><br>
+      To <%= shape.T_STREET %><br>
+    </h4>
+    <h5><%= shape.BIKEROUTE %></h5>
+  </div>
+</script>
+<script type="text/template" id="public_art-template">
+  <div class="info">
+    <h3><%= shape.NAME %></h3>
+    <% if (shape.ARTIST) { %><h4>By <%= shape.ARTIST %></h4><% } %>
+    <h5>
+      <%= shape.PARK %> PARK</br>
+      Owned by <%= shape.OWNER %>
+    </h5>
+  </div>
+</script>
+<script type="text/template" id="landmarks-template">
+  <div class="info">
+    <h3><%= shape['LANDMARK NAME'] %></h3>
+    <h4>
+      <%= shape['ADDRESS'] %><br>
+      <% if (shape['DATE BUILT']) { %>Built <%= shape['DATE BUILT'] %><br><% } %>
+      <% if (shape['ARCHITECT']) { %><%= shape['ARCHITECT'] %>, architect<% } %>
+    </h4>
+  </div>
+</script>
+<script type="text/template" id="bike_rack-template">
+  <div class="info">
+    <h3><%= shape.TotInstall %> rack<% if (parseInt(shape.TotInstall) > 1) { %>s<% } %> installed</h3>
+    <h4><%= shape.Address %></h4>
+  </div>
+</script>
+<script type="text/template" id="dry_precinct-template">
+  <div class="info dry_precinct">
+    <h3><%= getPrecinctName(shape.VOTE_DRY_I) %> (<%= shape.STATUS %>)</h3>
+    <p>
+      The Illinois Liquor Control Act of 1934 (i.e., one year after Prohibition ended) allows any
+      precinct in Chicago to vote itself "dry" or "wet". If a precinct is dry, no liquor licenses
+      within the original boundaries of the precinct at the time of the election may ever be sold
+      (except for catering liquor licenses.) If a precinct is wet, packaged alcoholic goods may be
+      sold as well, but no consumption may be permitted on-premises.
+    </p>
+    <p>
+      Precinct numbers as reflected above are the original ones that voted to become dry. The
+      current boundaries may fall into a different precinct today, and often an entirely different
+      ward as well.
+    </p>
+  </div>
 
-var landuse = svg.append("g");
-var water = svg.append("g");
-var roads_residential = svg.append("g");
-var roads_secondary = svg.append("g");
-var roads_primary = svg.append("g");
-var roads_trunk = svg.append("g");
-var rect = svg.append("g");
-var pointmax = svg.append("g");
-
-d3.json('output.json', function(err, data) {
-	rect.selectAll("rect")
-		.data(data)
-		.enter().append("rect")
-		.attr("x", function(d) { return projection([d._west, d._north])[0]; })
-		.attr("y", function(d) { return projection([d._west, d._north])[1]; })
-		.attr("width", function(d) { return projection([d._east, d._south])[0] - projection([d._west, d._north])[0]; })
-		.attr("height", function(d) { return projection([d._east, d._south])[1] - projection([d._west, d._north])[1]; })
-		.style("fill", function(d) { return colour(d.current_speed); })
-		.style("fill-opacity", 0.25)
-	  .transition()
-		.delay(3000)
-		.duration(1500)
-		.style("fill", function(d) { return colour(d.current_speed2); })
-});
-
-d3.json('roads_residential.topo.json', function(err, data) {
-	roads_residential.append("path")
-		.datum(topojson.object(data, data.objects.roads_residential))
-		.attr("class", "roads_residential")
-		.attr("d", path);
-});
-
-d3.json('roads_secondary.topo.json', function(err, data) {
-	roads_secondary.append("path")
-		.datum(topojson.object(data, data.objects.roads_secondary))
-		.attr("class", "roads_secondary")
-		.attr("d", path);
-});
-
-d3.json('roads_primary.topo.json', function(err, data) {
-	roads_primary.append("path")
-		.datum(topojson.object(data, data.objects.roads_primary))
-		.attr("class", "roads_primary")
-		.attr("d", path);
-});
-
-d3.json('roads_trunk.topo.json', function(err, data) {
-	roads_trunk.append("path")
-		.datum(topojson.object(data, data.objects.roads_trunk))
-		.attr("class", "roads_trunk")
-		.attr("d", path);
-});
-
-d3.json('waterway.topo.json', function(err, data) {
-	water.append("path")
-		.datum(topojson.object(data, data.objects.waterway))
-		.attr("class", "water")
-		.attr("d", path);
-});
-
-d3.json('landuse.topo.json', function(err, data) {
-	landuse.append("path")
-		.datum(topojson.object(data, data.objects.landuse))
-		.attr("class", "landuse")
-		.attr("d", path);
-})
-
+</script>
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29485819-1']);
+  _gaq.push(['_setDomainName', 'epton.org']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
 </script>
 </body>
 </html>
