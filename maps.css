@@ -1,0 +1,175 @@
+text, circle {
+  pointer-events: none;
+}
+
+#zoom-in, #zoom-out {
+  position: absolute;
+  width: 35px;
+  height: 35px;
+  left: 0px;
+  font-size: 18px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: rgba(0, 0, 0, 0.9);
+  text-align: center;
+  z-index: 10000;
+  border-right: 1px solid black;
+  border-bottom: 1px solid black
+}
+
+
+#zoom-in:hover, #zoom-out:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: default;
+}
+
+#zoom-in {
+  top: 0px;
+}
+
+#zoom-out {
+  top: 35px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.shape {
+  stroke: rgba(100, 100, 100, 0.6);
+  stroke-width: 0.8;
+}
+
+.shape:hover {
+  stroke: rgba(255, 255, 255, 1.0);
+  opacity: 0.7;
+}
+
+#nameplate {
+  position: absolute;
+  left: 0px;
+  bottom: 0px;
+  z-index: 9999;
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+#nameplate > h1 {
+  line-height: 0;
+  font-size: 18px;
+  margin-bottom: 0;
+  padding: 3px;
+}
+
+#info-box, #overlay-box {
+  position: absolute;
+  right: 10px;
+  z-index: 9999;
+  background-color: rgba(255, 255, 255, 0.1);
+  text-align: right;
+  margin-top: 10px;
+  max-width: 20%;
+  padding: 3px;
+}
+
+#page-link > a {
+  color: black;
+  font-size: 18px;
+  font-weight: normal;
+}
+
+#overlay-box {
+  top: 150px;
+}
+
+#info-box {
+  top: 0px;
+}
+
+.info h2 {
+  margin-top: 0px;
+}
+
+.dry_precinct {
+  text-align: left;
+  padding: 3px;
+}
+
+.minimal-select select {
+   background: transparent;
+   font-size: 18px;
+   text-decoration: underline;
+   line-height: 1;
+   border: 0;
+   border-radius: 0;
+   margin-bottom: 0;
+}
+
+#signature {
+  position: fixed;
+  bottom: 0px;
+  right: 0px;
+  z-index: 9999;
+  padding: 3px;
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+#signature > a {
+  color: black;
+  font-size: 1em;
+  text-decoration: none;
+}
+
+svg {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+}
+
+h1 {
+  font-size: 4em;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
+@media all and (max-width: 800px) {
+  #map, #overlay, #nameplate > h1 {
+    font-size: 14px;
+  }
+
+  #signature > a {
+    font-size: 8px !important;
+  }
+
+  #info-box, #overlay-box {
+    margin-top: 0px;
+  }
+
+  #info-box {
+    max-width: 60%;
+    right: 0px;
+  }
+
+  .dry_precinct {
+    padding: 3px;
+  }
+
+  #overlay-box {
+    left: 0px;
+    bottom: 50px;
+    top: initial;
+    right: initial;
+    text-align: left;
+    max-width: 100% !important;
+  }
+
+  .info {
+    font-size: 0.8em;
+  }
+
+  #page-link {
+    position: fixed;
+    left: 0px;
+    top: 105px;
+    background-color: rgba(255, 255, 255, 0.9);
+    z-index: 9999;
+  }
+}
