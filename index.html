@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<head>
+<style>
+
+body {
+	background: rgb(10, 16, 29);
+}
+
+.water {
+	fill: rgb(66, 73, 85);
+	fill-opacity: 1;
+}
+
+.landuse {
+	fill: rgb(51, 51, 51);
+	fill-opacity: 0.5;
+}
+
+.roads_residential {
+	fill: none;
+	stroke: rgb(63, 71, 85);
+	stroke-width: 0.3px;
+}
+
+.roads_secondary {
+	fill: none;
+	stroke: rgb(63, 71, 85);
+	stroke-width: 0.4px;
+}
+
+.roads_primary {
+	fill: none;
+	stroke: rgb(63, 71, 85);
+	stroke-width: 0.5px;
+}
+
+.roads_trunk {
+	fill: none;
+	stroke: rgb(63, 71, 85);
+	stroke-width: 0.8px;
+}
+
+</style>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
+<script src="http://d3js.org/topojson.v0.min.js"></script>
+</head>
+<body>
+
+<script>
+
+var width = 1200,
+	height = 760;
+
+var projection = d3.geo.mercator()
+	.translate([width/2, height/2])
+	.center([-87.685323, 41.8352915])
+	.scale(70000);
+	
+var path = d3.geo.path()
+	.projection(projection);
+	
+var colour = d3.scale.threshold()
+    .domain([0, 9, 14, 19, 24, 30])
+    .range(["#7f0000", "#d7301f", "#ef6548", "#fc8d59", "#fdbb84", "#fdd49e", "#fff7ec"]);
+
+var svg = d3.select("body").append("svg")
+	.attr("width", width)
+	.attr("height", height);
+
+var landuse = svg.append("g");
+var water = svg.append("g");
+var roads_residential = svg.append("g");
+var roads_secondary = svg.append("g");
+var roads_primary = svg.append("g");
+var roads_trunk = svg.append("g");
+var rect = svg.append("g");
+var pointmax = svg.append("g");
+
+d3.json('output.json', function(err, data) {
+	rect.selectAll("rect")
+		.data(data)
+		.enter().append("rect")
+		.attr("x", function(d) { return projection([d._west, d._north])[0]; })
+		.attr("y", function(d) { return projection([d._west, d._north])[1]; })
+		.attr("width", function(d) { return projection([d._east, d._south])[0] - projection([d._west, d._north])[0]; })
+		.attr("height", function(d) { return projection([d._east, d._south])[1] - projection([d._west, d._north])[1]; })
+		.style("fill", function(d) { return colour(d.current_speed); })
+		.style("fill-opacity", 0.25)
+	  .transition()
+		.delay(3000)
+		.duration(1500)
+		.style("fill", function(d) { return colour(d.current_speed2); })
+});
+
+d3.json('roads_residential.topo.json', function(err, data) {
+	roads_residential.append("path")
+		.datum(topojson.object(data, data.objects.roads_residential))
+		.attr("class", "roads_residential")
+		.attr("d", path);
+});
+
+d3.json('roads_secondary.topo.json', function(err, data) {
+	roads_secondary.append("path")
+		.datum(topojson.object(data, data.objects.roads_secondary))
+		.attr("class", "roads_secondary")
+		.attr("d", path);
+});
+
+d3.json('roads_primary.topo.json', function(err, data) {
+	roads_primary.append("path")
+		.datum(topojson.object(data, data.objects.roads_primary))
+		.attr("class", "roads_primary")
+		.attr("d", path);
+});
+
+d3.json('roads_trunk.topo.json', function(err, data) {
+	roads_trunk.append("path")
+		.datum(topojson.object(data, data.objects.roads_trunk))
+		.attr("class", "roads_trunk")
+		.attr("d", path);
+});
+
+d3.json('waterway.topo.json', function(err, data) {
+	water.append("path")
+		.datum(topojson.object(data, data.objects.waterway))
+		.attr("class", "water")
+		.attr("d", path);
+});
+
+d3.json('landuse.topo.json', function(err, data) {
+	landuse.append("path")
+		.datum(topojson.object(data, data.objects.landuse))
+		.attr("class", "landuse")
+		.attr("d", path);
+})
+
+</script>
+</body>
+</html>
